@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint & Format
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      # デモは main に入るまで誰も試さないので、PR の時点で組み立てておく。
+      # 型は typecheck が見ているが、Vite と Tailwind の設定はここでしか落ちない
+      - name: デモの組み立て
+        run: pnpm build:demo
+
+      # node10 解決（TypeScript 4.7 未満）は engines >=22 の方針と両立しないため対象外にする
+      - name: 配布形式の検査 (publint + attw)
+        run: pnpm publint && pnpm attw --pack . --profile node16
+
+      - name: サイズの検査
+        run: pnpm size
+
+  matrix:
+    name: Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm test
