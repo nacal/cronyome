@@ -33,34 +33,32 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # TODO: 一時的な診断。changesets が pnpm info の応答から versions を読めずに落ちるため
-      - name: 診断（pnpm info の応答を見る）
-        run: |
-          echo "--- pnpm: $(pnpm --version) / npm: $(npm --version) / node: $(node --version)"
-          echo "--- .npmrc"
-          cat .npmrc 2>/dev/null || echo "(なし)"
-          cat ~/.npmrc 2>/dev/null || echo "(ホームになし)"
-          echo "--- pnpm info cronyome --json"
-          pnpm info cronyome --json > /tmp/info.json 2>/tmp/info.err || echo "exit=$?"
-          echo "stdout bytes: $(wc -c < /tmp/info.json)"
-          echo "stderr:"; cat /tmp/info.err
-          head -c 800 /tmp/info.json
-          echo
-          node -e "const o=require('/tmp/info.json'); console.log('keys:', Object.keys(o).join(',')); console.log('versions:', Array.isArray(o.versions) ? 'array' : typeof o.versions)" || true
-
-      # changeset があればバージョン更新 PR を作り、無ければ publish する。
-      # 「changeset が無ければスキップ」を挟むと、PR をマージした後の
-      # publish される回だけが弾かれる。
-      #
-      # 認証は OIDC なので NPM_TOKEN は渡さない。ただし npm は存在しない
-      # パッケージに Trusted Publisher を設定できないため、最初の 1 回だけは
-      # 手元から npm publish して枠を作る必要がある
-      - name: Create Release PR or Publish
+      # changeset があればバージョン更新 PR を作る。無ければ何もしない
+      - name: Create Release PR
+        id: changesets
         uses: changesets/action@v1
         with:
-          publish: pnpm release
           version: pnpm changeset version
           title: "chore: release cronyome"
           commit: "chore: release cronyome"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # publish に `changeset publish` を使わない。
+      # changesets は公開済みバージョンの判定に `pnpm info <name> --json` を使うが、
+      # ランナー上の pnpm はこれを JSON 配列で返す。changesets はオブジェクトを前提に
+      # info.versions を読むため undefined になり TypeError で落ちる（手元では再現しない）。
+      # 判定は npm view で自分で行う
+      - name: npm へ公開する
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view "cronyome@$VERSION" version > /dev/null 2>&1; then
+            echo "cronyome@$VERSION は公開済み。何もしない"
+            exit 0
+          fi
+          echo "cronyome@$VERSION を公開する"
+          pnpm build
+          npm publish --provenance --access public
+          git tag "v$VERSION"
+          git push origin "v$VERSION"
