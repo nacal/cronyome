@@ -12,6 +12,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      # npm の Trusted Publishing（OIDC）に使う。トークンは保存しない
       id-token: write
     steps:
       - uses: actions/checkout@v6
@@ -24,11 +25,20 @@ jobs:
           cache: pnpm
           registry-url: "https://registry.npmjs.org"
 
+      # Node 22 に同梱される npm は 10 系で、Trusted Publishing に届かない。
+      # 必要なのは npm 11.5.1 以上と Node 22.14.0 以上
+      - name: npm を Trusted Publishing に足りるバージョンへ上げる
+        run: npm install -g npm@latest
+
       - run: pnpm install --frozen-lockfile
 
       # changeset があればバージョン更新 PR を作り、無ければ publish する。
       # 「changeset が無ければスキップ」を挟むと、PR をマージした後の
-      # publish される回だけが弾かれるので、条件を付けないこと
+      # publish される回だけが弾かれる。
+      #
+      # 認証は OIDC なので NPM_TOKEN は渡さない。ただし npm は存在しない
+      # パッケージに Trusted Publisher を設定できないため、最初の 1 回だけは
+      # 手元から npm publish して枠を作る必要がある
       - name: Create Release PR or Publish
         uses: changesets/action@v1
         with:
@@ -38,5 +48,3 @@ jobs:
           commit: "chore: release cronyome"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
