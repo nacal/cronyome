@@ -1,0 +1,43 @@
+<!doctype html>
+<!--
+  OG 画像（demo/public/ogp.png）の元データ。文字を画像に焼くので、
+  文言を変えたら再生成する。手順は CONTRIBUTING.md の「OG 画像を作り直す」を参照。
+  Vite のエントリは index.html だけなので、このファイルはビルドに含まれない
+-->
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      body {
+        display: grid;
+        align-content: center;
+        justify-items: center;
+        gap: 2.5rem;
+        width: 1200px;
+        height: 630px;
+        background: #f1f7f8;
+        color: #141a1c;
+        font-family:
+          system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      }
+
+      img {
+        width: 34rem;
+      }
+
+      p {
+        font-size: 2rem;
+        letter-spacing: 0.02em;
+      }
+    </style>
+  </head>
+  <body>
+    <img src="../logo.svg" alt="cronyome" />
+    <p>cron 式を自然な日本語に変換するライブラリ</p>
+  </body>
+</html>
