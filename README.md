@@ -13,6 +13,7 @@
 </p>
 
 <p align="center">
+  <a href="https://www.npmjs.com/package/cronyome"><img src="https://img.shields.io/npm/v/cronyome.svg" alt="npm version"></a>
   <a href="https://github.com/nacal/cronyome/actions/workflows/ci.yml"><img src="https://github.com/nacal/cronyome/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
 </p>
