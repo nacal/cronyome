@@ -3,6 +3,7 @@ name: Release
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -31,6 +32,21 @@ jobs:
         run: npm install -g npm@latest
 
       - run: pnpm install --frozen-lockfile
+
+      # TODO: 一時的な診断。changesets が pnpm info の応答から versions を読めずに落ちるため
+      - name: 診断（pnpm info の応答を見る）
+        run: |
+          echo "--- pnpm: $(pnpm --version) / npm: $(npm --version) / node: $(node --version)"
+          echo "--- .npmrc"
+          cat .npmrc 2>/dev/null || echo "(なし)"
+          cat ~/.npmrc 2>/dev/null || echo "(ホームになし)"
+          echo "--- pnpm info cronyome --json"
+          pnpm info cronyome --json > /tmp/info.json 2>/tmp/info.err || echo "exit=$?"
+          echo "stdout bytes: $(wc -c < /tmp/info.json)"
+          echo "stderr:"; cat /tmp/info.err
+          head -c 800 /tmp/info.json
+          echo
+          node -e "const o=require('/tmp/info.json'); console.log('keys:', Object.keys(o).join(',')); console.log('versions:', Array.isArray(o.versions) ? 'array' : typeof o.versions)" || true
 
       # changeset があればバージョン更新 PR を作り、無ければ publish する。
       # 「changeset が無ければスキップ」を挟むと、PR をマージした後の
