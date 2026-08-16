@@ -1,5 +1,11 @@
 # cronyome
 
+## 0.1.1
+
+### Patch Changes
+
+- [`d93f02f`](https://github.com/nacal/cronyome/commit/d93f02fa6a1e6a9ca28bfe41402e054e9bf00d66) Thanks [@nacal](https://github.com/nacal)! - README に npm バージョンのバッジを追加する。ライブラリの挙動に変更はない。
+
 ## 0.1.0
 
 ### Minor Changes

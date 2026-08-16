@@ -1,6 +1,6 @@
 {
   "name": "cronyome",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "cron 式を自然な日本語に変換するライブラリ",
   "keywords": [
     "cron",
