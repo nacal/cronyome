@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+/*
+ * 色は light-dark() で 1 回だけ定義する。こうすると dark: バリアントが要らず、
+ * 使う側は bg-bg / text-fg のように 1 語で書ける。
+ * color-scheme の宣言が前提になる
+ */
+@theme {
+  --color-bg: light-dark(#f1f7f8, #111a1f);
+  --color-fg: light-dark(#141a1c, #e2edf0);
+  --color-muted: light-dark(#64757a, #8b9ba1);
+  --color-line: light-dark(#dde7e9, #263139);
+  --color-err: light-dark(#d1242f, #ff7b72);
+  --color-err-bg: light-dark(#fceef0, #271518);
+
+  /* ロゴと同じ色。ライト・ダークどちらの背景でも 3:1 以上になる輝度に収めてある。
+     ただし本文には使わない（文字に必要な 4.5:1 には届かないため） */
+  --color-accent: #0e8fa8;
+
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans:
+    system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+}
+
+/* 既定は OS の設定に従う。data-theme が付いたらそちらを優先する。
+   light-dark() は color-scheme を見て値を選ぶので、切り替えはこれだけで足りる */
+:root {
+  color-scheme: light dark;
+
+  &[data-theme="light"] {
+    color-scheme: light;
+  }
+
+  &[data-theme="dark"] {
+    color-scheme: dark;
+  }
+}
+
+/* テーマ切り替えは既定のクロスフェード。長さだけ少しゆっくりにする。
+   擬似要素は文書に 1 つしか存在しないので、ユーティリティで書けない */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 320ms;
+  animation-timing-function: ease;
+}

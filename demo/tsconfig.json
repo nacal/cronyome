@@ -1,0 +1,21 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    // デモはアプリ側のコードなので、ライブラリ本体に課している
+    // isolatedDeclarations（明示的な型注釈の強制）までは要求しない
+    "isolatedDeclarations": false,
+    "types": ["vite/client"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    // esbuild もこの設定を読むので、Vite 側に JSX の設定を書かなくてよい
+    "jsx": "react-jsx",
+    "jsxImportSource": "hono/jsx/dom"
+  },
+  "include": [
+    "main.tsx",
+    "components",
+    "hooks",
+    "utils",
+    "vite-env.d.ts",
+    "vite.config.ts"
+  ]
+}
