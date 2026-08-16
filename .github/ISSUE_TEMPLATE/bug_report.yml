@@ -1,0 +1,56 @@
+name: 出力がおかしい / Wrong output
+description: 生成される日本語が期待と違う場合はこちら。English is welcome.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        このライブラリは**生成される文言そのものが仕様**です。
+        期待する出力を書いてもらえると、そのままテストケースになります。
+
+        The generated wording *is* the specification, so please tell us what you
+        expected to read. Your answer becomes a test case as-is.
+
+  - type: input
+    id: expression
+    attributes:
+      label: cron 式 / Cron expression
+      placeholder: "0 3 * 1 *"
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 実際の出力 / Actual output
+      placeholder: |
+        short: 毎年1月 3:00
+        long:  毎年1月の3時00分に実行
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待する出力 / Expected output
+      description: 日本語としてどう読めてほしいか。理由も書けると助かります。
+      placeholder: |
+        short: 1月の毎日 3:00
+        「毎年1月」だと年 1 回に読めるが、この式は 1 月中は毎日動くため
+    validations:
+      required: true
+
+  - type: textarea
+    id: options
+    attributes:
+      label: 設定 / Options
+      description: createDescriber に渡した引数。既定のままなら空欄で構いません。
+      render: ts
+      placeholder: |
+        createDescriber({ fields: 5, style: { hourFormat: "12h" } })
+
+  - type: input
+    id: version
+    attributes:
+      label: バージョン / Version
+      placeholder: "cronyome 0.1.0"
