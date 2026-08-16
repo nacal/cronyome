@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "isolatedDeclarations": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "noEmit": true,
+    "types": ["node"],
+    // ライブラリ本体に JSX は無いが、エディタが demo/tsconfig.json ではなく
+    // こちらを使って demo/*.tsx を評価した場合に react を探しにいかないよう、ここにも置く
+    "jsx": "react-jsx",
+    "jsxImportSource": "hono/jsx/dom"
+  },
+  // isolatedDeclarations は src の明示的な型注釈を強制するために有効にしている。
+  // 設定ファイルは defineConfig の戻り値を推論に頼るため、対象から外す（Biome で lint はされる）。
+  "include": ["src", "test"]
+}
