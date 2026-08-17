@@ -50,6 +50,28 @@ const stepOf = (f: Field): number | null => {
   return term?.kind === "step" ? term.step : null
 }
 
+/**
+ * 分・秒のステップ。刻み幅だけを述べると `3/10`（＝`3-59/10`）が `*∕10` と
+ * 同じ説明になり、実行が 3 分ずれていることを説明から読み取れなくなる。
+ * ステップでないときは null を返し、呼び出し側の他の分岐に任せる
+ */
+function stepCycle(f: Field, unit: string, max: number): string | null {
+  const term = f.terms.length === 1 ? f.terms[0] : undefined
+  if (term?.kind !== "step") return null
+  // "55/10" のように 1 回しか回らない指定は、周期ではなく時刻として述べる
+  if (f.values.size === 1) return null
+
+  const every = `${term.step}${unit}ごと`
+  const base = term.base
+  if (base.kind !== "range") return every
+  // 全域へのステップは起点も終端も制約になっていない
+  if (base.from === 0 && base.to === max) return every
+  // "3/10" は "3-59/10" の略記。終端はフィールドの上限そのものなので書かない
+  if (base.to === max) return `${base.from}${unit}から${every}`
+  // 範囲は展開せず範囲のまま表す。renderDom と同じく「〜」で書く
+  return `${base.from}〜${base.to}${unit}の${every}`
+}
+
 const specialTerms = (f: Field): FieldTerm[] =>
   f.terms.filter(
     t => t.kind === "lastDay" || t.kind === "nth" || t.kind === "lastDow"
@@ -235,15 +257,15 @@ function renderTime(schedule: Schedule, style: ResolvedStyle): TimeSegment {
 
   if (second) {
     if (second.isAll) return cycle("毎秒", true)
-    const secStep = stepOf(second)
-    if (secStep !== null) return cycle(`${secStep}秒ごと`)
+    const secCycle = stepCycle(second, "秒", 59)
+    if (secCycle !== null) return cycle(secCycle)
     if (minute.isAll) return cycle(`毎分${renderNumberSet(second, style)}秒`)
   }
 
   if (minute.isAll) return cycle("毎分", true)
 
-  const minStep = stepOf(minute)
-  if (minStep !== null) return cycle(`${minStep}分ごと`)
+  const minCycle = stepCycle(minute, "分", 59)
+  if (minCycle !== null) return cycle(minCycle)
 
   if (hour.isAll) return cycle(`毎時${renderNumberSet(minute, style)}分`)
 

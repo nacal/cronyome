@@ -7,7 +7,7 @@
 | パス | 対象 | 検証すること |
 |---|---|---|
 | `integration/describe.test.ts` | cases | `short` / `long` / `errors` が期待どおりか |
-| `invariants/invariants.test.ts` | cases + generated | I1〜I8 の性質を満たすか |
+| `invariants/invariants.test.ts` | cases + generated | I1〜I9 の性質を満たすか |
 | `property/semantics.test.ts` | generated | `parts` が croner の実行時刻と矛盾しないか |
 | `property/frequency.test.ts` | cases + generated | 説明が示す周期の上限を、実際の実行回数が超えていないか |
 | `meta/coverage.test.ts` | cases | 規則とトークンの網羅、設定エラーで例外が出るか |
@@ -31,7 +31,8 @@
 describerFor(c)                  // ケースの fields / tz から describer を作る
 segmentsOf(describer, expr)      // トークンごとの文字列を取り出す
 nextRuns(expr, 100)              // croner による次回実行時刻
-countRunsInYear(expr, cap)       // 基準年（2027 固定）の実行回数。cap で打ち切る
+countRunsInYear(expr, cap, 5)    // 基準年（2027 固定）の実行回数。cap で打ち切る
+forCroner(expr, 5)               // croner が読めない "3/10" を "3-59/10" に展開する
 annualUpperBound(text, parts)    // 説明文が示す年間実行回数の上限。null なら検査対象外
 ```
 
@@ -39,4 +40,4 @@ annualUpperBound(text, parts)    // 説明文が示す年間実行回数の上�
 
 ## 既知の穴
 
-`frequency.test.ts` は「N分ごと」を含む説明を検査対象から外している（`annualUpperBound` が `null` を返す）。ステップ式の上限を正しく見積もる方法が未実装のため。同種のバグは I8 が別経路で捕まえている。
+`frequency.test.ts` は「N分ごと」を含む説明を検査対象から外している（`annualUpperBound` が `null` を返す）。ステップ式の上限を正しく見積もる方法が未実装のため。同種のバグは I8・I9 が別経路で捕まえている。

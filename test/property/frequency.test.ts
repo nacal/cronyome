@@ -30,7 +30,7 @@ group("説明文が示す周期は、実際の実行回数を下回らない", (
 
     if (bound === null || bound > COUNT_CAP) return
 
-    const actual = countRunsInYear(expr, bound)
+    const actual = countRunsInYear(expr, bound, fields)
 
     expect(
       actual,

@@ -95,6 +95,30 @@ const corpus = [
   ])
 ]
 
+// 値集合が違うのに説明が同じなら、どちらかは制約を落としている。
+// I8 はフィールドの有無しか見ないので、"3/10" を "*/10" と同じ説明にする類の
+// 取りこぼし（起点・範囲の脱落）はこちらで捕まえる
+group("I9: 説明が同じなら値集合も同じ", () => {
+  it("コーパス全体で説明が衝突しない", () => {
+    const seen = new Map<string, { expr: string; parts: string }>()
+    const collisions: string[] = []
+
+    for (const expr of corpus) {
+      const r = cron.describe(expr)
+      const parts = JSON.stringify(r.parts)
+      const prev = seen.get(r.short)
+      if (prev === undefined) seen.set(r.short, { expr, parts })
+      else if (prev.parts !== parts) {
+        collisions.push(
+          `「${r.short}」: ${prev.expr} と ${expr} は実行時刻が違う（${prev.parts} / ${parts}）`
+        )
+      }
+    }
+
+    expect(collisions).toEqual([])
+  })
+})
+
 group.each(invariants)("$id: $name", inv => {
   it.each(corpus)("%s", expr => {
     const result = cron.describe(expr)
