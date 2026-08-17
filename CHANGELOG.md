@@ -1,5 +1,11 @@
 # cronyome
 
+## 0.2.0
+
+### Minor Changes
+
+- [#3](https://github.com/nacal/cronyome/pull/3) [`37b8a0b`](https://github.com/nacal/cronyome/commit/37b8a0bd8c87cead68ba47fe0829a4d671671a06) Thanks [@nacal](https://github.com/nacal)! - 分・秒の起点つきステップを説明に反映する。`3/10 * * * *`（＝`3-59/10`）はこれまで `*/10` と同じ「10分ごと」になっていたが、「3分から10分ごと」と出すようになった。範囲つきステップ `10-50/10` は「10〜50分の10分ごと」、1 回しか回らない `55/10` は「毎時55分」と、周期語をやめて時刻で述べる。
+
 ## 0.1.1
 
 ### Patch Changes
