@@ -7,9 +7,9 @@
 | パス | 対象 | 検証すること |
 |---|---|---|
 | `integration/describe.test.ts` | cases | `short` / `long` / `errors` が期待どおりか |
-| `invariants/invariants.test.ts` | cases + generated | I1〜I9 の性質を満たすか |
-| `property/semantics.test.ts` | generated | `parts` が croner の実行時刻と矛盾しないか |
-| `property/frequency.test.ts` | cases + generated | 説明が示す周期の上限を、実際の実行回数が超えていないか |
+| `invariants/invariants.test.ts` | cases + generated（5・6 フィールド） | I1〜I9 の性質を満たすか |
+| `property/semantics.test.ts` | generated（5・6 フィールド） | `parts` が croner の実行時刻と矛盾しないか |
+| `property/frequency.test.ts` | cases + generated（5・6 フィールド） | 説明が示す周期の上限を、実際の実行回数が超えていないか |
 | `meta/coverage.test.ts` | cases | 規則とトークンの網羅、設定エラーで例外が出るか |
 | `meta/docs.test.ts` | README.md | 出力例テーブルが実際の出力と一致するか |
 | `fuzz/no-throw.test.ts` | ランダム入力 | `describe()` が投げないか |
@@ -19,7 +19,7 @@
 | パス | 内容 |
 |---|---|
 | `corpus/cases.ts` | 手書きのケース表。**文字列の期待値を持つのはここだけ** |
-| `corpus/generated.ts` | 各フィールドの代表値の直積。文字列は検証せず、不変条件と croner との照合にだけ使う |
+| `corpus/generated.ts` | 各フィールドの代表値の直積。文字列は検証せず、不変条件と croner との照合にだけ使う。`generatedSixField` は秒つき（時刻軸だけの直積） |
 
 `generated.ts` に期待文字列を書かないこと。読める大きさを超えて、仕様書としての価値を失う。
 

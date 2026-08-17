@@ -2,13 +2,14 @@ import { expect, describe as group, it } from "vitest"
 import type { DescribeResult } from "../../src/index"
 import { createDescriber } from "../../src/index"
 import { cases } from "../corpus/cases"
-import { generated } from "../corpus/generated"
+import { generated, generatedSixField } from "../corpus/generated"
 import { type Segments, segmentsOf } from "../support/harness"
 
 //
 // ケースごとに書かないので、コーパスが増えるほど自動的に守備範囲が広がる。
 
 const cron = createDescriber()
+const cron6 = createDescriber({ fields: 6 })
 
 const CYCLE_WORD = /毎年|毎月|毎週|毎日|ごと/g
 const TIME_CYCLE_WORD = /毎時|毎分|毎秒/g
@@ -37,7 +38,11 @@ const invariants: Invariant[] = [
   {
     id: "I1-time",
     name: "時刻軸の周期語は 1 つまで",
-    check: (_r, s) => countMatches(s.time, TIME_CYCLE_WORD) <= 1
+    check: (_r, s) => {
+      // 「毎時5分の毎秒」の前半は限定句なので、周期語としては数えない
+      const cycleText = s.time.replace(/(毎時|毎分|毎秒)[^の]*の/g, "")
+      return countMatches(cycleText, TIME_CYCLE_WORD) <= 1
+    }
   },
   {
     id: "I5",
@@ -95,16 +100,32 @@ const corpus = [
   ])
 ]
 
+// 秒つきは describer が別なので、コーパスも分けて持つ
+const sixFieldCorpus = [
+  ...new Set([
+    ...cases.filter(c => !c.tz && c.fields === 6).map(c => c.expr),
+    ...generatedSixField
+  ])
+]
+
+const targets = [
+  ...corpus.map(expr => ({ expr, cron })),
+  ...sixFieldCorpus.map(expr => ({ expr, cron: cron6 }))
+]
+
 // 値集合が違うのに説明が同じなら、どちらかは制約を落としている。
 // I8 はフィールドの有無しか見ないので、"3/10" を "*/10" と同じ説明にする類の
 // 取りこぼし（起点・範囲の脱落）はこちらで捕まえる
 group("I9: 説明が同じなら値集合も同じ", () => {
-  it("コーパス全体で説明が衝突しない", () => {
+  it.each([
+    { name: "5 フィールド", exprs: corpus, cron },
+    { name: "6 フィールド", exprs: sixFieldCorpus, cron: cron6 }
+  ])("$name のコーパスで説明が衝突しない", ({ exprs, cron: describer }) => {
     const seen = new Map<string, { expr: string; parts: string }>()
     const collisions: string[] = []
 
-    for (const expr of corpus) {
-      const r = cron.describe(expr)
+    for (const expr of exprs) {
+      const r = describer.describe(expr)
       const parts = JSON.stringify(r.parts)
       const prev = seen.get(r.short)
       if (prev === undefined) seen.set(r.short, { expr, parts })
@@ -120,9 +141,9 @@ group("I9: 説明が同じなら値集合も同じ", () => {
 })
 
 group.each(invariants)("$id: $name", inv => {
-  it.each(corpus)("%s", expr => {
-    const result = cron.describe(expr)
-    const segments = segmentsOf(cron, expr)
+  it.each(targets)("$expr", ({ expr, cron: describer }) => {
+    const result = describer.describe(expr)
+    const segments = segmentsOf(describer, expr)
 
     expect(
       inv.check(result, segments),

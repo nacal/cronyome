@@ -1,11 +1,30 @@
 import { expect, describe as group, it } from "vitest"
-import { describe as describeCron } from "../../src/index"
-import { generated } from "../corpus/generated"
-import { nextRuns } from "../support/harness"
+import { createDescriber, describe as describeCron } from "../../src/index"
+import { generated, generatedSixField } from "../corpus/generated"
+import { nextRuns, REFERENCE_DATE } from "../support/harness"
 
 // croner が算出した実際の実行時刻と parts が矛盾しないことを確認する。
 
 const SAMPLE = 100
+
+const cron6 = createDescriber({ fields: 6, referenceDate: REFERENCE_DATE })
+
+group("秒つきの parts が実際の実行時刻と矛盾しない", () => {
+  it.each(generatedSixField)("%s", expr => {
+    const { parts } = cron6.describe(expr)
+    const runs = nextRuns(expr, SAMPLE)
+
+    if (parts.second) {
+      expect(runs.every(d => parts.second?.includes(d.getSeconds()))).toBe(true)
+    }
+    if (parts.minute) {
+      expect(runs.every(d => parts.minute?.includes(d.getMinutes()))).toBe(true)
+    }
+    if (parts.hour) {
+      expect(runs.every(d => parts.hour?.includes(d.getHours()))).toBe(true)
+    }
+  })
+})
 
 group("parts が実際の実行時刻と矛盾しない", () => {
   it.each(generated)("%s", expr => {

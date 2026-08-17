@@ -245,6 +245,17 @@ createDescriber({ fields: 5 })  // 既定。6 フィールドを渡すとエラ�
 createDescriber({ fields: 6 })  // 先頭を秒として解釈
 ```
 
+秒の指定も説明に含めます。分や時の制約と重なるときは、限定句を前に置きます。
+
+```ts
+const cron = createDescriber({ fields: 6 })
+
+cron.describe('*/30 * * * * *').short // → "30秒ごと"
+cron.describe('*/30 5 * * * *').short // → "毎時5分の30秒ごと"
+cron.describe('55 5 * * * *').short   // → "毎時5分55秒"
+cron.describe('30 */5 * * * *').short // → "5分ごとの30秒"
+```
+
 
 ---
 

@@ -44,6 +44,8 @@ const REQUIRED_TAGS: Tag[] = [
   "time:stepHour",
   "time:stepOffset",
   "time:stepInRange",
+  "time:secondScope",
+  "time:secondWithTime",
   "time:fixed",
   "time:multi",
   // 畳み込み

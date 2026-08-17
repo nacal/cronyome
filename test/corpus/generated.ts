@@ -20,3 +20,17 @@ export const generated: string[] = perField.minute.flatMap(minute =>
     )
   )
 )
+
+// 秒つき（6 フィールド）。日付軸は 5 フィールド側で覆えているので、
+// ここは時刻軸（秒・分・時）の組み合わせに絞る
+const perTimeField = {
+  second: ["*", "0", "0,30", "*/30", "15/30"],
+  minute: ["*", "5", "10-20", "*/5"],
+  hour: ["*", "9", "9-17", "*/2"]
+} as const
+
+export const generatedSixField: string[] = perTimeField.second.flatMap(second =>
+  perTimeField.minute.flatMap(minute =>
+    perTimeField.hour.map(hour => `${second} ${minute} ${hour} * * *`)
+  )
+)

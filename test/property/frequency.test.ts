@@ -1,7 +1,7 @@
 import { expect, describe as group, it } from "vitest"
 import { describe as describeCron } from "../../src/index"
 import { cases } from "../corpus/cases"
-import { generated } from "../corpus/generated"
+import { generated, generatedSixField } from "../corpus/generated"
 import {
   annualUpperBound,
   countRunsInYear,
@@ -18,7 +18,8 @@ const targets: { expr: string; fields?: 5 | 6 }[] = [
     .map(c =>
       c.fields ? { expr: c.expr, fields: c.fields } : { expr: c.expr }
     ),
-  ...generated.map(expr => ({ expr }))
+  ...generated.map(expr => ({ expr })),
+  ...generatedSixField.map(expr => ({ expr, fields: 6 as const }))
 ]
 
 group("説明文が示す周期は、実際の実行回数を下回らない", () => {

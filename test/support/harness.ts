@@ -159,7 +159,11 @@ export function annualUpperBound(text: string, parts: Parts): number | null {
   if (/平日|土日/.test(text) && !matched.some(([w]) => w === "毎週")) {
     matched.push(["毎週", 53])
   }
-  const timeWord = TIME_CYCLE_BOUND.find(([word]) => text.includes(word))
+  // 「毎時5分の毎秒」のように語が 2 つ出るときは、細かいほう（毎秒）が周期。
+  // 粗いほうを取ると上限を実際より小さく見積もって誤検知になる
+  const timeWord = [...TIME_CYCLE_BOUND]
+    .reverse()
+    .find(([word]) => text.includes(word))
 
   // 「N分ごと」「N時間ごと」などの step 由来の語は上限が緩く、検査の価値が薄い
   if (/ごと/.test(text)) return null
@@ -182,11 +186,13 @@ export function annualUpperBound(text: string, parts: Parts): number | null {
   const timeBound = timeWord
     ? timeWord[1] *
       (timeWord[0] === "毎時"
-        ? listedCount(parts.minute)
+        ? listedCount(parts.minute) * listedCount(parts.second)
         : timeWord[0] === "毎分"
           ? listedCount(parts.second)
           : 1)
-    : listedCount(parts.hour) * listedCount(parts.minute)
+    : listedCount(parts.hour) *
+      listedCount(parts.minute) *
+      listedCount(parts.second)
 
   return dateBound * timeBound
 }
