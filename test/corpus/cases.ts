@@ -41,6 +41,10 @@ export type Tag =
   | "time:stepHour"
   /** 起点つきステップ（`3/10`）。起点を落とすと `*∕10` と同じ説明になる */
   | "time:stepOffset"
+  /** 秒の周期に前置する分の限定句（`*∕30 5 * * * *`） */
+  | "time:secondScope"
+  /** 値で指定された秒。分や時の説明に含める（`55 5 * * * *`） */
+  | "time:secondWithTime"
   /** 範囲つきステップ（`10-50/10`）。範囲を落とすと一時間中動くように読める */
   | "time:stepInRange"
   | "time:fixed"
@@ -237,6 +241,62 @@ export const cases: Case[] = [
     short: "30秒ごと",
     long: "30秒ごとに実行",
     tags: ["time:stepSecond", "freq:suppressed", "tz:none"]
+  },
+  {
+    // 秒の周期だけを述べると分の制約が消える。hourScope と同じ理屈で分も前置する
+    expr: "*/30 5 * * * *",
+    fields: 6,
+    short: "毎時5分の30秒ごと",
+    long: "毎時5分の30秒ごとに実行",
+    tags: ["time:secondScope", "time:stepSecond", "freq:suppressed", "tz:none"]
+  },
+  {
+    // 時に限定句があるときは「毎時」を重ねない
+    expr: "* 5 9 * * *",
+    fields: 6,
+    short: "9時台の5分の毎秒",
+    long: "9時台の5分の毎秒に実行",
+    tags: [
+      "time:secondScope",
+      "time:everySecond",
+      "hour:scope",
+      "freq:suppressed",
+      "tz:none"
+    ]
+  },
+  {
+    // 秒が値のときは周期語ではなく時刻として述べる。落とすと 1 分ずれる
+    expr: "55 5 * * * *",
+    fields: 6,
+    short: "毎時5分55秒",
+    long: "毎時5分55秒に実行",
+    tags: [
+      "time:secondWithTime",
+      "time:everyHour",
+      "freq:suppressed",
+      "tz:none"
+    ]
+  },
+  {
+    // 「2時間ごとの0分」と同じ形で、周期語のあとに秒を繋ぐ
+    expr: "30 */5 * * * *",
+    fields: 6,
+    short: "5分ごとの30秒",
+    long: "5分ごとの30秒に実行",
+    tags: [
+      "time:secondWithTime",
+      "time:stepMinute",
+      "freq:suppressed",
+      "tz:none"
+    ]
+  },
+  {
+    // 秒が複数あるなら時刻も複数並べる。1 つに落とすと実行が消える
+    expr: "0,30 5 9 * * *",
+    fields: 6,
+    short: "毎日 9:05:00, 9:05:30",
+    long: "毎日9時05分0秒と9時05分30秒に実行",
+    tags: ["time:secondWithTime", "time:multi", "freq:daily", "tz:none"]
   },
   {
     // 秒にも同じ規則を効かせる

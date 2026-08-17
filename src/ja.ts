@@ -201,6 +201,25 @@ function hourScope(
   }
 }
 
+/**
+ * 秒の周期を述べるときに前置する分の限定句。「毎時5分の」「5分ごとの」。
+ * hourScope と同じ役割で、これが無いと分の制約が説明から消える
+ */
+function minuteScope(
+  f: Field,
+  hourIsAll: boolean,
+  style: ResolvedStyle
+): string {
+  if (f.isAll) return ""
+
+  const step = stepCycle(f, "分", 59)
+  if (step !== null) return `${step}の`
+
+  // 「毎時」を補うのは時が `*` のときだけ。時に限定句があるとそちらと重なる
+  const set = renderNumberSet(f, style)
+  return hourIsAll ? `毎時${set}分の` : `${set}分の`
+}
+
 function pad(n: number): string {
   return n.toString().padStart(2, "0")
 }
@@ -256,39 +275,53 @@ function renderTime(schedule: Schedule, style: ResolvedStyle): TimeSegment {
   })
 
   if (second) {
-    if (second.isAll) return cycle("毎秒", true)
+    // 「毎時5分の」「5分ごとの」。秒の周期だけを述べると分の制約が説明から消える
+    const mScope = minuteScope(minute, hour.isAll, style)
+    if (second.isAll) return cycle(`${mScope}毎秒`, mScope === "")
     const secCycle = stepCycle(second, "秒", 59)
-    if (secCycle !== null) return cycle(secCycle)
+    if (secCycle !== null) return cycle(mScope + secCycle)
     if (minute.isAll) return cycle(`毎分${renderNumberSet(second, style)}秒`)
   }
 
   if (minute.isAll) return cycle("毎分", true)
 
-  const minCycle = stepCycle(minute, "分", 59)
-  if (minCycle !== null) return cycle(minCycle)
+  // 秒が値で指定されているなら、以降の分岐でも必ず述べる。落とすと情報が消えて嘘になる
+  const secText =
+    second && !second.isAll ? `${renderNumberSet(second, style)}秒` : ""
 
-  if (hour.isAll) return cycle(`毎時${renderNumberSet(minute, style)}分`)
+  const minCycle = stepCycle(minute, "分", 59)
+  if (minCycle !== null) {
+    // 「5分ごとの30秒」。周期語のあとは「の」で繋ぐ（「2時間ごとの0分」と同じ形）
+    return cycle(secText === "" ? minCycle : `${minCycle}の${secText}`)
+  }
+
+  if (hour.isAll) {
+    return cycle(`毎時${renderNumberSet(minute, style)}分${secText}`)
+  }
 
   // 「N時間ごとの」は hourScope が前置しているので、ここでは分だけを述べる
-  if (stepOf(hour) !== null) return cycle(`${renderNumberSet(minute, style)}分`)
+  if (stepOf(hour) !== null) {
+    return cycle(`${renderNumberSet(minute, style)}分${secText}`)
+  }
 
   // 「9,10,11時」と列挙せず「9〜17時の毎時」と範囲で表す。情報は落ちない
   if (hour.terms.length === 1 && hour.terms[0]?.kind === "range") {
-    return cycle(`毎時${renderNumberSet(minute, style)}分`)
+    return cycle(`毎時${renderNumberSet(minute, style)}分${secText}`)
   }
 
-  // 秒が固定されているなら時刻に含める。落とすと情報が消えて嘘になる
-  const sec =
-    second && !second.isAll && second.values.size === 1
-      ? (sorted(second)[0] ?? null)
-      : null
+  // 秒は時刻に含める。1 つに落とすと実行が消えるので、値の数だけ時刻を並べる
+  const secs = second && !second.isAll ? sorted(second) : [null]
 
   const shortText = joinValues(
-    hours.flatMap(h => minutes.map(mm => clock(h, mm, sec, style, false))),
+    hours.flatMap(h =>
+      minutes.flatMap(mm => secs.map(ss => clock(h, mm, ss, style, false)))
+    ),
     style
   )
   const longText = joinValues(
-    hours.flatMap(h => minutes.map(mm => clock(h, mm, sec, style, true))),
+    hours.flatMap(h =>
+      minutes.flatMap(mm => secs.map(ss => clock(h, mm, ss, style, true)))
+    ),
     style,
     true
   )
@@ -443,8 +476,13 @@ function timeFrequency(schedule: Schedule, time: TimeSegment): Frequency {
   if (time.short.endsWith("秒ごと")) return "everyNSeconds"
   if (time.short.endsWith("分ごと")) return "everyNMinutes"
   if (time.short.endsWith("時間ごと")) return "everyNHours"
-  if (time.short === "毎秒") return "everySecond"
+  // 「毎時5分の毎秒」のように限定句が前置されることがあるので、末尾で見る
+  if (time.short.endsWith("毎秒")) return "everySecond"
   if (time.short === "毎分") return "everyMinute"
+  // 「5分ごとの30秒」は周期語のあとに秒が付くので、末尾では判別できない
+  if (stepCycle(schedule.minute, "分", 59) !== null) return "everyNMinutes"
+  // 「毎分55秒」は 1 分に 1 回。時が `*` でも 1 時間に 1 回ではない
+  if (schedule.second && schedule.minute.isAll) return "everyMinute"
   if (schedule.hour.isAll) return "everyHour"
   return "daily"
 }
