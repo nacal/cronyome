@@ -39,6 +39,10 @@ export type Tag =
   | "time:stepSecond"
   | "time:stepMinute"
   | "time:stepHour"
+  /** 起点つきステップ（`3/10`）。起点を落とすと `*∕10` と同じ説明になる */
+  | "time:stepOffset"
+  /** 範囲つきステップ（`10-50/10`）。範囲を落とすと一時間中動くように読める */
+  | "time:stepInRange"
   | "time:fixed"
   | "time:multi"
   // 畳み込み
@@ -86,6 +90,35 @@ export const cases: Case[] = [
     short: "7分ごと",
     long: "7分ごとに実行",
     tags: ["time:stepMinute", "freq:suppressed", "tz:none"]
+  },
+  {
+    // 起点つきステップ。"3/10" は "3-59/10" の略記で、実行は 3 分ずれている。
+    // 刻み幅だけを述べると "*/10" と同じ説明になる
+    expr: "3/10 * * * *",
+    short: "3分から10分ごと",
+    long: "3分から10分ごとに実行",
+    tags: ["time:stepOffset", "freq:suppressed", "tz:none"]
+  },
+  {
+    // 起点が下限、終端が上限なら "*/10" と同じ値集合なので、起点は書かない
+    expr: "0/10 * * * *",
+    short: "10分ごと",
+    long: "10分ごとに実行",
+    tags: ["time:stepMinute", "freq:suppressed", "tz:none"]
+  },
+  {
+    // 分の範囲つきステップ。範囲が落ちると毎時間ずっと動くように読める
+    expr: "10-50/10 * * * *",
+    short: "10〜50分の10分ごと",
+    long: "10〜50分の10分ごとに実行",
+    tags: ["time:stepInRange", "freq:suppressed", "tz:none"]
+  },
+  {
+    // "55/10" は 55 分の 1 回しか回らない。周期語で述べると複数回に読める
+    expr: "55/10 * * * *",
+    short: "毎時55分",
+    long: "毎時55分に実行",
+    tags: ["time:everyHour", "freq:suppressed", "tz:none"]
   },
   {
     expr: "0 * * * *",
@@ -204,6 +237,14 @@ export const cases: Case[] = [
     short: "30秒ごと",
     long: "30秒ごとに実行",
     tags: ["time:stepSecond", "freq:suppressed", "tz:none"]
+  },
+  {
+    // 秒にも同じ規則を効かせる
+    expr: "15/30 * * * * *",
+    fields: 6,
+    short: "15秒から30秒ごと",
+    long: "15秒から30秒ごとに実行",
+    tags: ["time:stepSecond", "time:stepOffset", "freq:suppressed", "tz:none"]
   },
   {
     expr: "* * * * * *",

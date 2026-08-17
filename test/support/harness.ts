@@ -72,20 +72,54 @@ export function segmentsOf(describer: Describer, expression: string): Segments {
 // croner との突き合わせ
 // ---------------------------------------------------------------------------
 
+/** フィールドの上限。数値起点のステップを範囲へ展開するのに使う */
+const FIELD_MAX: Record<5 | 6, number[]> = {
+  5: [59, 23, 31, 12, 6],
+  6: [59, 59, 23, 31, 12, 6]
+}
+
+/**
+ * croner は "3/10"（数値起点のステップ）を構文エラーにするが、
+ * cronyome は robfig/cron や Quartz と同じく "3-59/10" の略記として解釈する。
+ * 突き合わせの前にその形へ展開して、croner に同じ意味を渡す
+ */
+export function forCroner(expression: string, fields: 5 | 6 = 5): string {
+  const maxes = FIELD_MAX[fields]
+  return expression
+    .trim()
+    .split(/\s+/)
+    .map((token, i) => {
+      const max = maxes[i]
+      if (max === undefined) return token
+      return token
+        .split(",")
+        .map(part => part.replace(/^(\d+)\//, `$1-${max}/`))
+        .join(",")
+    })
+    .join(" ")
+}
+
 export function nextRuns(expression: string, count: number): Date[] {
-  return new Cron(expression).nextRuns(count, REFERENCE_DATE)
+  return new Cron(forCroner(expression)).nextRuns(count, REFERENCE_DATE)
 }
 
 /**
  * 基準年の実行回数を数える。cap を超えたら数えるのをやめる（毎分の式で数百万回回さないため）。
  * 戻り値が cap を超えているかどうかだけが意味を持つ。
  */
-export function countRunsInYear(expression: string, cap: number): number {
+export function countRunsInYear(
+  expression: string,
+  cap: number,
+  fields: 5 | 6 = 5
+): number {
   // croner はローカル時刻で評価するので、年の境界もローカル時刻で取る。
   // UTC 境界と混ぜると 9 時間ぶんだけ多く数えて 1 回ずれる
   const startAt = new Date(REFERENCE_YEAR, 0, 1)
   const stopAt = new Date(REFERENCE_YEAR + 1, 0, 1)
-  const runs = new Cron(expression).nextRuns(cap + 1, startAt)
+  const runs = new Cron(forCroner(expression, fields)).nextRuns(
+    cap + 1,
+    startAt
+  )
   return runs.filter(d => d < stopAt).length
 }
 
